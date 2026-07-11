@@ -389,3 +389,26 @@ def worker_node(payload: dict) -> dict:
 # ============================================================
 # 8) ReducerWithImages (subgraph)
 #    merge_content -> decide_images -> generate_and_place_images
+
+
+def merge_content(state: State) -> dict:
+    plan = state["plan"]
+    if plan is None:
+        raise ValueError("merge_content called without plan.")
+    ordered_sections = [md for _, md in sorted(state["sections"], key=lambda x: x[0])]
+    body = "\n\n".join(ordered_sections).strip()
+    merged_md = f"# {plan.blog_title}\n\n{body}\n"
+    return {"merged_md": merged_md}
+
+
+DECIDE_IMAGES_SYSTEM = """You are an expert technical editor.
+Decide if images/diagrams are needed for THIS blog.
+
+Rules:
+- Max 3 images total.
+- Each image must materially improve understanding (diagram/flow/table-like visual).
+- Insert placeholders exactly: [[IMAGE_1]], [[IMAGE_2]], [[IMAGE_3]].
+- If no images needed: md_with_placeholders must equal input and images=[].
+- Avoid decorative images; prefer technical diagrams with short labels.
+Return strictly GlobalImagePlan.
+"""
