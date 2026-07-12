@@ -491,3 +491,54 @@ def _gemini_generate_image_bytes(prompt: str) -> bytes:
 
 
 
+def _safe_slug(title: str) -> str:
+    s = title.strip().lower()
+    s = re.sub(r"[^a-z0-9 _-]+", "", s)
+    s = re.sub(r"\s+", "_", s).strip("_")
+    return s or "blog"
+
+
+
+def generate_and_place_images(state: State) -> dict:
+    plan = state["plan"]
+    assert plan is not None
+
+    md = state.get("md_with_placeholders") or state["merged_md"]
+    image_specs = state.get("image_specs", []) or []
+
+    # If no images requested, just write merged markdown
+    if not image_specs:
+        filename = f"{_safe_slug(plan.blog_title)}.md"
+        Path(filename).write_text(md, encoding="utf-8")
+        return {"final": md}
+
+    images_dir = Path("images")
+    images_dir.mkdir(exist_ok=True)
+
+    for spec in image_specs:
+        placeholder = spec["placeholder"]
+        filename = spec["filename"]
+        out_path = images_dir / filename
+
+        # generate only if needed
+        if not out_path.exists():
+            try:
+                img_bytes = _gemini_generate_image_bytes(spec["prompt"])
+                out_path.write_bytes(img_bytes)
+            except Exception as e:
+                # graceful fallback: keep doc usable
+                prompt_block = (
+                    f"> **[IMAGE GENERATION FAILED]** {spec.get('caption','')}\n>\n"
+                    f"> **Alt:** {spec.get('alt','')}\n>\n"
+                    f"> **Prompt:** {spec.get('prompt','')}\n>\n"
+                    f"> **Error:** {e}\n"
+                )
+                md = md.replace(placeholder, prompt_block)
+                continue
+
+        img_md = f"![{spec['alt']}](images/{filename})\n*{spec['caption']}*"
+        md = md.replace(placeholder, img_md)
+
+    filename = f"{_safe_slug(plan.blog_title)}.md"
+    Path(filename).write_text(md, encoding="utf-8")
+    return {"final": md}
