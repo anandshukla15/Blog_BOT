@@ -412,3 +412,24 @@ Rules:
 - Avoid decorative images; prefer technical diagrams with short labels.
 Return strictly GlobalImagePlan.
 """
+
+
+def decide_images(state: State) -> dict:
+    planner = llm.with_structured_output(GlobalImagePlan)
+    merged_md = state["merged_md"]
+    plan = state["plan"]
+    assert plan is not None
+
+    image_plan = planner.invoke(
+        [
+            SystemMessage(content=DECIDE_IMAGES_SYSTEM),
+            HumanMessage(
+                content=(
+                    f"Blog kind: {plan.blog_kind}\n"
+                    f"Topic: {state['topic']}\n\n"
+                    "Insert placeholders + propose image prompts.\n\n"
+                    f"{merged_md}"
+                )
+            ),
+        ]
+    )
