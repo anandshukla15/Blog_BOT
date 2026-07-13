@@ -556,3 +556,12 @@ reducer_graph.add_edge("merge_content", "decide_images")
 reducer_graph.add_edge("decide_images", "generate_and_place_images")
 reducer_graph.add_edge("generate_and_place_images", END)
 reducer_subgraph = reducer_graph.compile()
+
+
+
+g = StateGraph(State)
+g.add_node("router", router_node)
+g.add_node("research", research_node)
+g.add_node("orchestrator", orchestrator_node)
+g.add_node("worker", worker_node)
+g.add_node("reducer", reducer_subgraph)
