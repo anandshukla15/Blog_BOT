@@ -570,3 +570,11 @@ g.add_node("reducer", reducer_subgraph)
 g.add_edge(START, "router")
 g.add_conditional_edges("router", route_next, {"research": "research", "orchestrator": "orchestrator"})
 g.add_edge("research", "orchestrator")
+
+
+g.add_conditional_edges("orchestrator", fanout, ["worker"])
+g.add_edge("worker", "reducer")
+g.add_edge("reducer", END)
+
+app = g.compile()
+app
