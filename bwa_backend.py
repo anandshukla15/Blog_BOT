@@ -565,3 +565,8 @@ g.add_node("research", research_node)
 g.add_node("orchestrator", orchestrator_node)
 g.add_node("worker", worker_node)
 g.add_node("reducer", reducer_subgraph)
+
+
+g.add_edge(START, "router")
+g.add_conditional_edges("router", route_next, {"research": "research", "orchestrator": "orchestrator"})
+g.add_edge("research", "orchestrator")
