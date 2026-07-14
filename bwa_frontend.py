@@ -11,3 +11,5 @@ from typing import Any, Dict, Optional, List, Iterator, Tuple
 
 import pandas as pd
 import streamlit as st
+
+from bwa_backend import app
