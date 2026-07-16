@@ -34,3 +34,15 @@ def bundle_zip(md_text: str, md_filename: str, images_dir: Path) -> bytes:
                 if p.is_file():
                     z.write(p, arcname=str(p))
     return buf.getvalue()
+
+
+
+def images_zip(images_dir: Path) -> Optional[bytes]:
+    if not images_dir.exists() or not images_dir.is_dir():
+        return None
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        for p in images_dir.rglob("*"):
+            if p.is_file():
+                z.write(p, arcname=str(p))
+    return buf.getvalue()
