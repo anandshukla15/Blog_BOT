@@ -20,3 +20,17 @@ def safe_slug(title: str) -> str:
     s = re.sub(r"[^a-z0-9 _-]+", "", s)
     s = re.sub(r"\s+", "_", s).strip("_")
     return s or "blog"
+
+
+
+
+def bundle_zip(md_text: str, md_filename: str, images_dir: Path) -> bytes:
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.writestr(md_filename, md_text.encode("utf-8"))
+
+        if images_dir.exists() and images_dir.is_dir():
+            for p in images_dir.rglob("*"):
+                if p.is_file():
+                    z.write(p, arcname=str(p))
+    return buf.getvalue()
