@@ -46,3 +46,31 @@ def images_zip(images_dir: Path) -> Optional[bytes]:
             if p.is_file():
                 z.write(p, arcname=str(p))
     return buf.getvalue()
+
+
+
+def try_stream(graph_app, inputs: Dict[str, Any]) -> Iterator[Tuple[str, Any]]:
+    """
+    Stream graph progress if available; else invoke.
+    Yields ("updates"/"values"/"final", payload).
+    """
+    try:
+        for step in graph_app.stream(inputs, stream_mode="updates"):
+            yield ("updates", step)
+        out = graph_app.invoke(inputs)
+        yield ("final", out)
+        return
+    except Exception:
+        pass
+
+    try:
+        for step in graph_app.stream(inputs, stream_mode="values"):
+            yield ("values", step)
+        out = graph_app.invoke(inputs)
+        yield ("final", out)
+        return
+    except Exception:
+        pass
+
+    out = graph_app.invoke(inputs)
+    yield ("final", out)
