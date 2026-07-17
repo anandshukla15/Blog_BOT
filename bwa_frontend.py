@@ -74,3 +74,14 @@ def try_stream(graph_app, inputs: Dict[str, Any]) -> Iterator[Tuple[str, Any]]:
 
     out = graph_app.invoke(inputs)
     yield ("final", out)
+
+
+
+def extract_latest_state(current_state: Dict[str, Any], step_payload: Any) -> Dict[str, Any]:
+    if isinstance(step_payload, dict):
+        if len(step_payload) == 1 and isinstance(next(iter(step_payload.values())), dict):
+            inner = next(iter(step_payload.values()))
+            current_state.update(inner)
+        else:
+            current_state.update(step_payload)
+    return current_state
