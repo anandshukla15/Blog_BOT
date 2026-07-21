@@ -155,3 +155,31 @@ def render_markdown_with_local_images(md: str):
 
         i += 1
 
+
+ #✅ NEW: Past blogs helpers
+# -----------------------------
+def list_past_blogs() -> List[Path]:
+    """
+    Returns .md files in current working directory, newest first.
+    Filters out obvious non-blog markdown files if needed.
+    """
+    cwd = Path(".")
+    files = [p for p in cwd.glob("*.md") if p.is_file()]
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return files
+
+
+def read_md_file(p: Path) -> str:
+    return p.read_text(encoding="utf-8", errors="replace")
+
+
+def extract_title_from_md(md: str, fallback: str) -> str:
+    """
+    Use first '# ' heading as title if present.
+    """
+    for line in md.splitlines():
+        if line.startswith("# "):
+            t = line[2:].strip()
+            return t or fallback
+    return fallback
+
