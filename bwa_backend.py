@@ -47,7 +47,7 @@ class Plan(BaseModel):
 class EvidenceItem(BaseModel):
     title: str
     url: str
-    published_at: Optional[str] = None  # ISO "YYYY-MM-DD" preferred
+    published_at: Optional[str] = None  
     snippet: Optional[str] = None
     source: Optional[str] = None
 
@@ -66,7 +66,7 @@ class EvidencePack(BaseModel):
 
 
 #image scheme  
-# 
+
 class ImageSpec(BaseModel):
     placeholder: str = Field(..., description="e.g. [[IMAGE_1]]")
     filename: str = Field(..., description="Save under images/, e.g. qkv_flow.png")
@@ -85,21 +85,21 @@ class GlobalImagePlan(BaseModel):
 class State(TypedDict):
     topic: str
 
-    # routing / research
+    
     mode: str
     needs_research: bool
     queries: List[str]
     evidence: List[EvidenceItem]
     plan: Optional[Plan]
 
-    # recency
+
     as_of: str
     recency_days: int
 
-    # workers
-    sections: Annotated[List[tuple[int, str]], operator.add]  # (task_id, section_md)
+   
+    sections: Annotated[List[tuple[int, str]], operator.add]  
 
-    # reducer/image
+    
     merged_md: str
     md_with_placeholders: str
     image_specs: List[dict]
@@ -110,7 +110,7 @@ class State(TypedDict):
 
 
 ####  LLM    
-# 
+
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
@@ -175,7 +175,7 @@ def _tavily_search(query: str, max_results: int = 5) -> List[dict]:
     if not os.getenv("TAVILY_API_KEY"):
         return []
     try:
-        from langchain_community.tools.tavily_search import TavilySearchResults  # type: ignore
+        from langchain_community.tools.tavily_search import TavilySearchResults  
         tool = TavilySearchResults(max_results=max_results)
         results = tool.invoke({"query": query})
         out: List[dict] = []
@@ -252,7 +252,7 @@ def research_node(state: State) -> dict:
 
 
 ##   ORCHESTRON 
-# 
+
 ORCH_SYSTEM = """You are a senior technical writer and developer advocate.
 Produce a highly actionable outline for a technical blog post.
 
@@ -386,9 +386,8 @@ def worker_node(payload: dict) -> dict:
 
     return {"sections": [(task.id, section_md)]}
 
-# ============================================================
-# 8) ReducerWithImages (subgraph)
-#    merge_content -> decide_images -> generate_and_place_images
+#  ReducerWithImages (subgraph)
+
 
 
 def merge_content(state: State) -> dict:
@@ -469,7 +468,7 @@ def _gemini_generate_image_bytes(prompt: str) -> bytes:
         ),
     )
 
-    # Depending on SDK version, parts may hang off resp.candidates[0].content.parts
+   
     parts = getattr(resp, "parts", None)
     if not parts and getattr(resp, "candidates", None):
         try:
@@ -506,7 +505,7 @@ def generate_and_place_images(state: State) -> dict:
     md = state.get("md_with_placeholders") or state["merged_md"]
     image_specs = state.get("image_specs", []) or []
 
-    # If no images requested, just write merged markdown
+   
     if not image_specs:
         filename = f"{_safe_slug(plan.blog_title)}.md"
         Path(filename).write_text(md, encoding="utf-8")
@@ -520,13 +519,13 @@ def generate_and_place_images(state: State) -> dict:
         filename = spec["filename"]
         out_path = images_dir / filename
 
-        # generate only if needed
+        
         if not out_path.exists():
             try:
                 img_bytes = _gemini_generate_image_bytes(spec["prompt"])
                 out_path.write_bytes(img_bytes)
             except Exception as e:
-                # graceful fallback: keep doc usable
+            
                 prompt_block = (
                     f"> **[IMAGE GENERATION FAILED]** {spec.get('caption','')}\n>\n"
                     f"> **Alt:** {spec.get('alt','')}\n>\n"
